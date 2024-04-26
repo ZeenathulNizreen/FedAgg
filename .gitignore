@@ -1,0 +1,12 @@
+# Ignore the virtual environment
+.venv/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore other files that should not be committed
+.DS_Store
+*.log
+*.csv
+*.json
