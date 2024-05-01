@@ -1,3 +1,4 @@
+
 import os
 from typing import List
 from tqdm import tqdm
@@ -20,8 +21,8 @@ datasets.utils.logging.set_verbosity_error()
 def fl_finetune(
         # model/data params
         global_model: str = 'allenai/OLMo-1B',
-        data_path: str = './data',
-        output_dir: str = './qlora-FedAggreagtion/',
+        data_path: str = '/root/FedAgg/data/10',
+        output_dir: str = './qlora-FedAggreagtion',
         # FL hyperparamas
         client_selection_strategy: str = 'random',
         client_selection_frac: float = 0.1,
@@ -79,7 +80,8 @@ def fl_finetune(
     ), "Please specify a --global_model, e.g. --global_modell='decapoda-research/llama-7b-hf'"
 
     data_path = os.path.join(data_path, str(num_clients))
-    assert (os.path.exists(data_path), "Please generate the data files for each client")
+    assert os.path.exists(data_path), "Please generate the data files for each client"
+
 
     # set up the global model & toknizer
     gradient_accumulation_steps = local_batch_size // local_micro_batch_size
