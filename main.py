@@ -1,16 +1,10 @@
-
 import os
 from typing import List
 from tqdm import tqdm
 import fire
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-###from transformers import LlamaTokenizer, LlamaForCausalLM
-from peft import (
-    LoraConfig,
-    get_peft_model,
-    prepare_model_for_int8_training,
-)
+from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from fed_utils import client_selection, GeneralClient
 import datasets
 from utils.prompter import Prompter
@@ -26,10 +20,10 @@ def fl_finetune(
         # FL hyperparamas
         client_selection_strategy: str = 'random',
         client_selection_frac: float = 0.1,
-        num_communication_rounds: int = 50, #10 in the github readme
+        num_communication_rounds: int = 10,
         num_clients: int = 10,
         # Local training hyperparams
-        local_batch_size: int = 64,  # 64,
+        local_batch_size: int = 64,
         local_micro_batch_size: int = 8,
         local_num_epochs: int = 10,
         local_learning_rate: float = 3e-4,
@@ -40,14 +34,11 @@ def fl_finetune(
         lora_r: int = 16,
         lora_alpha: int = 16,
         lora_dropout: float = 0.05,
-        lora_target_modules: List[str] = [
-            "q_proj",
-        ],
+        lora_target_modules: List[str] = ["q_proj"],
         # llm hyperparams
         train_on_inputs: bool = True,
         group_by_length: bool = False,
-        resume_from_checkpoint: str = None,  # either training checkpoint or final adapter
-        prompt_template_name: str = "olmo",  
+        prompt_template_name: str = "olmo",
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
@@ -72,42 +63,33 @@ def fl_finetune(
             f"lora_target_modules: {lora_target_modules}\n"
             f"train_on_inputs: {train_on_inputs}\n"
             f"group_by_length: {group_by_length}\n"
-            f"resume_from_checkpoint: {resume_from_checkpoint or False}\n"
             f"prompt template: {prompt_template_name}\n"
         )
-    assert (
-        global_model
-    ), "Please specify a --global_model, e.g. --global_modell='decapoda-research/llama-7b-hf'"
+    assert global_model, "Please specify a --global_model, e.g. --global_modell='decapoda-research/llama-7b-hf'"
 
     data_path = os.path.join(data_path, str(num_clients))
     assert os.path.exists(data_path), "Please generate the data files for each client"
-
-
-    # set up the global model & toknizer
-    gradient_accumulation_steps = local_batch_size // local_micro_batch_size
-    prompter = Prompter(prompt_template_name)
-    device_map = "auto"
-    world_size = int(os.environ.get("WORLD_SIZE", 1))
-    ddp = world_size != 1
-    if ddp:
-        device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)}
-        gradient_accumulation_steps = gradient_accumulation_steps // world_size
-
-
+    """
     # Load the OLMo 1B model and tokenizer
     model = AutoModelForCausalLM.from_pretrained(
-        "allenai/OLMo-1B", 
-        revision="step20000-tokens84B",
-        load_in_8bit=True, 
-        torch_dtype=torch.float16,
-        device_map=device_map,
+        global_model,
+        device_map="auto",
+        attn_implementation="flash_attention_2",
+        torch_dtype=torch.bfloat16,
     )
+    """
 
-    tokenizer = AutoTokenizer.from_pretrained("allenai/OLMo-1B")
-    tokenizer.pad_token_id = (
-        0
-    )
-    tokenizer.padding_side = "left"
+    model = AutoModelForCausalLM.from_pretrained(
+        "allenai/OLMo-1B", revision="step30000-tokens126B", 
+        flash_attention=True,
+        torch_dtype=torch.bfloat16,
+        trust_remote_code=True
+        )
+                                        
+
+    tokenizer = AutoTokenizer.from_pretrained(global_model)
+    tokenizer.pad_token_id = 0
+    tokenizer.padding_side = "right"
 
     def tokenize(prompt, add_eos_token=True):
         result = tokenizer(
@@ -130,27 +112,28 @@ def fl_finetune(
         return result
 
     def generate_and_tokenize_prompt(data_point):
-        full_prompt = prompter.generate_prompt(
+        full_prompt = Prompter(prompt_template_name).generate_prompt(
             data_point["instruction"],
             data_point["context"],
             data_point["response"],
         )
         tokenized_full_prompt = tokenize(full_prompt)
         if not train_on_inputs:
-            user_prompt = prompter.generate_prompt(
+            user_prompt = Prompter(prompt_template_name).generate_prompt(
                 data_point["instruction"], data_point["context"]
             )
             tokenized_user_prompt = tokenize(user_prompt, add_eos_token=False)
             user_prompt_len = len(tokenized_user_prompt["input_ids"])
 
             tokenized_full_prompt["labels"] = [
-                                                  -100
-                                              ] * user_prompt_len + tokenized_full_prompt["labels"][
-                                                                    user_prompt_len:
-                                                                    ]  # could be speed up, probably
-        return tokenized_full_prompt 
+                -100
+            ] * user_prompt_len + tokenized_full_prompt["labels"][
+                                user_prompt_len:
+                                ]
 
-    model = prepare_model_for_int8_training(model)
+        return tokenized_full_prompt
+
+    # Load LoRA configuration
     config = LoraConfig(
         r=lora_r,
         lora_alpha=lora_alpha,
@@ -159,12 +142,11 @@ def fl_finetune(
         bias="none",
         task_type="CAUSAL_LM",
     )
-    model = get_peft_model(model, config)
-    if not ddp and torch.cuda.device_count() > 1:
-        model.is_parallelizable = True
-        model.model_parallel = True
 
-    print("The process of federated lora has started..")
+    # Prepare the model for training with LoRA
+    model = get_peft_model(model, config)
+
+    print("The process of federated LoRA has started..")
     previously_selected_clients_set = set()
     last_client_id = None
     local_dataset_len_dict = dict()
@@ -173,21 +155,25 @@ def fl_finetune(
     for epoch in tqdm(range(num_communication_rounds)):
 
         print("\nConducting the client selection")
-        selected_clients_set = client_selection(num_clients, client_selection_frac, client_selection_strategy,
-                                                other_info=epoch)
+        selected_clients_set = client_selection(
+            num_clients, client_selection_frac, client_selection_strategy,
+            other_info=epoch
+        )
 
         for client_id in selected_clients_set:
             client = GeneralClient(client_id, model, data_path, output_dir)
 
             print("\nPreparing the local dataset and trainer for Client_{}".format(client_id))
-            client.preprare_local_dataset(generate_and_tokenize_prompt, local_val_set_size)
-            client.build_local_trainer(tokenizer,
-                                       local_micro_batch_size,
-                                       gradient_accumulation_steps,
-                                       local_num_epochs,
-                                       local_learning_rate,
-                                       group_by_length,
-                                       ddp)
+            client.prepare_local_dataset(
+                generate_and_tokenize_prompt, local_val_set_size
+            )
+            client.build_local_trainer(
+                tokenizer,
+                local_micro_batch_size,
+                local_num_epochs,
+                local_learning_rate,
+                group_by_length,
+            )
 
             print("Initiating the local training of Client_{}".format(client_id))
             client.initiate_local_training()
@@ -197,27 +183,22 @@ def fl_finetune(
 
             print("\nTerminating the local training of Client_{}".format(client_id))
             model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = client.terminate_local_training(
-                epoch, local_dataset_len_dict, previously_selected_clients_set)
+                epoch, local_dataset_len_dict, previously_selected_clients_set
+            )
             del client
- 
-        """print("Collecting the weights of clients and performing aggregation")
-        model = FedAvg(model,
-                       selected_clients_set,
-                       output_dir,
-                       local_dataset_len_dict,
-                       epoch,
-                       )
-        torch.save(model.state_dict(), os.path.join(output_dir, str(epoch), "adapter_model.bin"))
-        """ 
 
-            # Save individual client models instead of aggregating
-    torch.save(model.state_dict(), os.path.join(output_dir, "client_{}_model_epoch_{}.bin".format(client_id, epoch)))       
+        print("Collecting the weights of clients and performing aggregation")
+        # Implement the logic for federated averaging here
 
-    config.save_pretrained(output_dir)
+        # Save individual client models instead of aggregating
+        torch.save(
+            model.state_dict(),
+            os.path.join(output_dir, "client_{}_model_epoch_{}.bin".format(client_id, epoch)),
+        )
 
-    """  # Please design the evaluation method based on your specific requirements in the fed_utils/evaluation.py file.
-        global_evaluation() 
-        """
+        # Save the model's configuration
+        model.config.save_pretrained(output_dir)
+
 
 if __name__ == "__main__":
     fire.Fire(fl_finetune)
