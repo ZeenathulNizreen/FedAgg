@@ -37,14 +37,14 @@ class GeneralClient:
     def build_local_trainer(self,
                             tokenizer,
                             local_micro_batch_size,
-                            gradient_accumulation_steps,
+                            #gradient_accumulation_steps,
                             local_num_epochs,
                             local_learning_rate,
                             group_by_length,
                             ddp):
         self.train_args = transformers.TrainingArguments(
             per_device_train_batch_size=local_micro_batch_size,
-            gradient_accumulation_steps=gradient_accumulation_steps,
+            #gradient_accumulation_steps=gradient_accumulation_steps,
             warmup_steps=0,
             num_train_epochs=local_num_epochs,
             learning_rate=local_learning_rate,

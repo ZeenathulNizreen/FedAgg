@@ -3,7 +3,8 @@ from typing import List
 from tqdm import tqdm
 import fire
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import bitsandbytes as bnb
+from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
 from fed_utils import client_selection, GeneralClient
 import datasets
@@ -23,7 +24,7 @@ def fl_finetune(
         num_communication_rounds: int = 10,
         num_clients: int = 10,
         # Local training hyperparams
-        local_batch_size: int = 64,
+        local_batch_size: int = 8,
         local_micro_batch_size: int = 8,
         local_num_epochs: int = 10,
         local_learning_rate: float = 3e-4,
@@ -31,13 +32,14 @@ def fl_finetune(
         local_save_steps: int = 3,
         cutoff_len: int = 512,
         # LoRA hyperparams
-        lora_r: int = 16,
+        lora_r: int = 64,
         lora_alpha: int = 16,
-        lora_dropout: float = 0.05,
-        lora_target_modules: List[str] = ["q_proj"],
+        lora_dropout: float = 0.01,
+        # lora_target_modules: List[str] = ["q_proj"],
+        lora_target_modules=["att_proj"],
         # llm hyperparams
         train_on_inputs: bool = True,
-        group_by_length: bool = False,
+        group_by_length: bool = True,  
         prompt_template_name: str = "olmo",
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
@@ -69,23 +71,20 @@ def fl_finetune(
 
     data_path = os.path.join(data_path, str(num_clients))
     assert os.path.exists(data_path), "Please generate the data files for each client"
-    """
-    # Load the OLMo 1B model and tokenizer
-    model = AutoModelForCausalLM.from_pretrained(
-        global_model,
-        device_map="auto",
-        attn_implementation="flash_attention_2",
-        torch_dtype=torch.bfloat16,
-    )
-    """
+    
+    bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_double_quant=True,
+    bnb_4bit_compute_dtype=torch.float16,
+)
 
     model = AutoModelForCausalLM.from_pretrained(
-        "allenai/OLMo-1B", revision="step30000-tokens126B", 
-        flash_attention=True,
-        torch_dtype=torch.bfloat16,
-        trust_remote_code=True
-        )
-                                        
+        global_model,
+        quantization_config=bnb_config,
+        device_map='auto',
+        trust_remote_code=True,
+    )
 
     tokenizer = AutoTokenizer.from_pretrained(global_model)
     tokenizer.pad_token_id = 0
@@ -169,10 +168,11 @@ def fl_finetune(
             )
             client.build_local_trainer(
                 tokenizer,
-                local_micro_batch_size,
-                local_num_epochs,
-                local_learning_rate,
-                group_by_length,
+                local_micro_batch_size = 8,
+                local_num_epochs = 10,
+                local_learning_rate = 0.0003,
+                group_by_length = True,  # Pass group_by_length here
+                ddp = False,  # Assuming you don't want ddp
             )
 
             print("Initiating the local training of Client_{}".format(client_id))

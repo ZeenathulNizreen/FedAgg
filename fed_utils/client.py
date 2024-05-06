@@ -19,7 +19,7 @@ class GeneralClient:
         self.output_dir = output_dir
         self.local_output_dir = os.path.join(self.output_dir, "trainer_saved", "local_output_{}".format(self.client_id))
 
-    def preprare_local_dataset(self, generate_and_tokenize_prompt, local_val_set_size):
+    def prepare_local_dataset(self, generate_and_tokenize_prompt, local_val_set_size):
         if local_val_set_size > 0:
             local_train_val = self.local_data["train"].train_test_split(
                 test_size=local_val_set_size, shuffle=True, seed=42
@@ -38,14 +38,14 @@ class GeneralClient:
     def build_local_trainer(self,
                             tokenizer,
                             local_micro_batch_size,
-                            gradient_accumulation_steps,
+                            #gradient_accumulation_steps,
                             local_num_epochs,
                             local_learning_rate,
                             group_by_length,
-                            ddp):
+                            ddp=False) :
         self.train_args = transformers.TrainingArguments(
             per_device_train_batch_size=local_micro_batch_size,
-            gradient_accumulation_steps=gradient_accumulation_steps,
+            #gradient_accumulation_steps=gradient_accumulation_steps,
             warmup_steps=0,
             num_train_epochs=local_num_epochs,
             learning_rate=local_learning_rate,
