@@ -1,3 +1,4 @@
+
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_quant_type="nf4",
@@ -26,7 +27,7 @@ print(model)
 
 
 python main.py --global_model 'allenai/OLMo-1B' \
-  --data_path '/root/FedAgg/data' \
+  --data_path '/root/FedAgg/data/10' \
   --output_dir './qlora-FedAggregation' \
   --num_communication_rounds 10 \
   --num_clients 10 \
@@ -39,5 +40,5 @@ python main.py --global_model 'allenai/OLMo-1B' \
   --lora_target_modules '["att_proj"]' \
   --train_on_inputs True \
   --group_by_length True \
-  --trust_remote_code True 
+  --trust_remote_code True
 

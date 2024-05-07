@@ -1,3 +1,4 @@
+
 import sys
 import pandas as pd
 import numpy as np
@@ -82,4 +83,4 @@ for client_id, idx in enumerate(idx_partition):
     sub_remaining_df_dic = sub_remaining_df.to_dict(orient='records')
 
     with open(os.path.join(data_path, "local_training_{}.json".format(client_id)), 'w') as outfile:
-        json.dump(sub_remaining_df_dic, outfile)
+        json.dump(sub_remaining_df_dic, outfil
