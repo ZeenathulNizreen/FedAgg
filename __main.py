@@ -42,3 +42,55 @@ python main.py --global_model 'allenai/OLMo-1B' \
   --group_by_length True \
   --trust_remote_code True
 
+
+
+from transformers import TrainingArguments
+
+args = TrainingArguments(
+  output_dir = "OLMo_instruct_generation",
+  #num_train_epochs=5,
+  max_steps = 500, # comment out this line if you want to train in epochs
+  per_device_train_batch_size = 4,
+  warmup_steps = 0.03,
+  logging_steps=10,
+  save_strategy="epoch",
+  #evaluation_strategy="epoch",
+  evaluation_strategy="steps",
+  eval_steps=20, # comment out this line if you want to evaluate at the end of each epoch
+  learning_rate=2e-4,
+  bf16=True,
+  lr_scheduler_type='constant',
+)
+
+
+from trl import SFTTrainer
+
+max_seq_length = 2048
+
+trainer = SFTTrainer(
+  model=model,
+  peft_config=peft_config,
+  max_seq_length=max_seq_length,
+  tokenizer=tokenizer,
+  packing=True,
+  formatting_func=create_prompt,
+  args=args,
+  train_dataset=dataset["train"],
+  eval_dataset=dataset["test"]
+)
+from trl import SFTTrainer
+
+max_seq_length = 2048
+
+trainer = SFTTrainer(
+  model=model,
+  peft_config=peft_config,
+  max_seq_length=max_seq_length,
+  tokenizer=tokenizer,
+  packing=True,
+  formatting_func=create_prompt,
+  args=args,
+  train_dataset=dataset["train"],
+  eval_dataset=dataset["test"]
+)
+

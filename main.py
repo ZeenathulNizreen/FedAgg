@@ -4,7 +4,14 @@ import fire
 import datasets
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 from transformers import BitsAndBytesConfig, DataCollatorForSeq2Seq
+import torch
+import fire
+import datasets
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
+from transformers import BitsAndBytesConfig, DataCollatorForSeq2Seq
 from tqdm import tqdm
+
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from fed_utils import client_selection, GeneralClient
@@ -71,6 +78,10 @@ def fl_finetune(
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.float16
     )
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16
+    )
 
     model = AutoModelForCausalLM.from_pretrained(
         global_model,
@@ -78,11 +89,15 @@ def fl_finetune(
         device_map='auto',
         trust_remote_code=True,
         revision="main"
+        revision="main"
     )
 
     tokenizer = AutoTokenizer.from_pretrained(global_model, use_fast=True)
+    tokenizer = AutoTokenizer.from_pretrained(global_model, use_fast=True)
     tokenizer.pad_token_id = 0
     tokenizer.padding_side = "right"
+
+    model.eval()
 
     model.eval()
 
@@ -106,6 +121,7 @@ def fl_finetune(
     for epoch in tqdm(range(num_communication_rounds)):
         selected_clients_set = client_selection(
             num_clients, client_selection_frac, client_selection_strategy, other_info=epoch
+            num_clients, client_selection_frac, client_selection_strategy, other_info=epoch
         )
 
         for client_id in selected_clients_set:
@@ -118,8 +134,18 @@ def fl_finetune(
                 local_learning_rate,
                 group_by_length
             )
+                local_micro_batch_size,
+                local_num_epochs,
+                local_learning_rate,
+                group_by_length
+            )
             client.initiate_local_training()
             client.train()
+            client.terminate_local_training(epoch)
+
+    model_path = os.path.join(output_dir, "aggregated_model.bin")
+    torch.save(model.state_dict(), model_path)
+    print(f"Model saved to {model_path}")
             client.terminate_local_training(epoch)
 
     model_path = os.path.join(output_dir, "aggregated_model.bin")
