@@ -3,20 +3,21 @@ from typing import List
 from tqdm import tqdm
 import fire
 import torch
+import torch.nn as nn
 import bitsandbytes as bnb
 from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig
-from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
+from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training, prepare_model_for_kbit_training
 from fed_utils import client_selection, GeneralClient
 import datasets
 from utils.prompter import Prompter
+from trl import SFTTrainer
 
 datasets.utils.logging.set_verbosity_error()
-
 
 def fl_finetune(
         # model/data params
         global_model: str = 'allenai/OLMo-1B',
-        data_path: str = '/root/FedAgg/data/10',
+        data_path: str = '/root/FedAgg/data',
         output_dir: str = './qlora-FedAggreagtion',
         # FL hyperparamas
         client_selection_strategy: str = 'random',
@@ -24,8 +25,8 @@ def fl_finetune(
         num_communication_rounds: int = 10,
         num_clients: int = 10,
         # Local training hyperparams
-        local_batch_size: int = 8,
-        local_micro_batch_size: int = 8,
+        local_batch_size: int = 2,
+        local_micro_batch_size: int = 2,
         local_num_epochs: int = 10,
         local_learning_rate: float = 3e-4,
         local_val_set_size: int = 0,
@@ -41,6 +42,7 @@ def fl_finetune(
         train_on_inputs: bool = True,
         group_by_length: bool = True,  
         prompt_template_name: str = "olmo",
+        lr_scheduler_type='constant',
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
@@ -87,8 +89,12 @@ def fl_finetune(
     )
 
     tokenizer = AutoTokenizer.from_pretrained(global_model)
+    tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = 0
     tokenizer.padding_side = "right"
+
+    model.config.use_cache = False
+    model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=False)
 
     def tokenize(prompt, add_eos_token=True):
         result = tokenizer(
@@ -142,7 +148,6 @@ def fl_finetune(
         task_type="CAUSAL_LM",
     )
 
-    # Prepare the model for training with LoRA
     model = get_peft_model(model, config)
 
     print("The process of federated LoRA has started..")
@@ -169,6 +174,7 @@ def fl_finetune(
             client.build_local_trainer(
                 tokenizer,
                 local_micro_batch_size = 8,
+                gradient_accumulation_steps = 4,
                 local_num_epochs = 10,
                 local_learning_rate = 0.0003,
                 group_by_length = True,  # Pass group_by_length here

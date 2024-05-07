@@ -1,3 +1,4 @@
+
 import transformers
 import os
 from datasets import load_dataset
@@ -8,7 +9,7 @@ from peft import (
     get_peft_model_state_dict,
     set_peft_model_state_dict,
 )
-
+from trl import SFTTrainer
 
 class GeneralClient:
     def __init__(self, client_id, model, data_path, output_dir):
@@ -38,14 +39,14 @@ class GeneralClient:
     def build_local_trainer(self,
                             tokenizer,
                             local_micro_batch_size,
-                            #gradient_accumulation_steps,
+                            gradient_accumulation_steps,
                             local_num_epochs,
                             local_learning_rate,
                             group_by_length,
                             ddp=False) :
         self.train_args = transformers.TrainingArguments(
             per_device_train_batch_size=local_micro_batch_size,
-            #gradient_accumulation_steps=gradient_accumulation_steps,
+            gradient_accumulation_steps=gradient_accumulation_steps,
             warmup_steps=0,
             num_train_epochs=local_num_epochs,
             learning_rate=local_learning_rate,
@@ -63,6 +64,7 @@ class GeneralClient:
             group_by_length=group_by_length,
             dataloader_drop_last=False
         )
+        """
         self.local_trainer = transformers.Trainer(model=self.model,
                                                   train_dataset=self.local_train_dataset,
                                                   eval_dataset=self.local_eval_dataset,
@@ -71,7 +73,17 @@ class GeneralClient:
                                                       tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
                                                   ),
                                                   )
-
+        """                                          
+        self.local_trainer = SFTTrainer(model=self.model,
+                                                  train_dataset=self.local_train_dataset,
+                                                  eval_dataset=self.local_eval_dataset,
+                                                  max_seq_length = 2048,
+                                                  packing=True,
+                                                  args=self.train_args,
+                                                  data_collator=transformers.DataCollatorForSeq2Seq(
+                                                      tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
+                                                  ),
+                                                  )
     def initiate_local_training(self):
         self.model.config.use_cache = False
         self.params_dict_old = copy.deepcopy(
