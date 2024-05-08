@@ -17,7 +17,7 @@ datasets.utils.logging.set_verbosity_error()
 def fl_finetune(
         # model/data params
         global_model: str = 'allenai/OLMo-1B',
-        data_path: str = '/root/FedAgg/data',
+        data_path: str = 'C:\\Uni works\\Research Implementations\\FedAgg-Qlora\\FedAgg\\data',
         output_dir: str = './qlora-FedAggreagtion',
         # FL hyperparamas
         client_selection_strategy: str = 'random',
