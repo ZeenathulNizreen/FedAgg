@@ -7,7 +7,7 @@ import torch.nn as nn
 import bitsandbytes as bnb
 from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training, prepare_model_for_kbit_training
-from fed_utils import client_selection, GeneralClient
+from fed_utils import FedAvg, client_selection, global_evaluation, GeneralClient
 import datasets
 from utils.prompter import Prompter
 from trl import SFTTrainer
@@ -36,11 +36,10 @@ def fl_finetune(
         lora_r: int = 64,
         lora_alpha: int = 16,
         lora_dropout: float = 0.01,
-        # lora_target_modules: List[str] = ["q_proj"],
         lora_target_modules=["att_proj"],
         # llm hyperparams
         train_on_inputs: bool = True,
-        group_by_length: bool = True,  
+        group_by_length: bool = True,
         prompt_template_name: str = "olmo",
         lr_scheduler_type='constant',
 ):
@@ -69,17 +68,17 @@ def fl_finetune(
             f"group_by_length: {group_by_length}\n"
             f"prompt template: {prompt_template_name}\n"
         )
-    assert global_model, "Please specify a --global_model, e.g. --global_modell='decapoda-research/llama-7b-hf'"
+    assert global_model 
 
     data_path = os.path.join(data_path, str(num_clients))
     assert os.path.exists(data_path), "Please generate the data files for each client"
     
     bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_double_quant=True,
-    bnb_4bit_compute_dtype=torch.float16,
-)
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_double_quant=True,
+        bnb_4bit_compute_dtype=torch.float16,
+    )
 
     model = AutoModelForCausalLM.from_pretrained(
         global_model,
@@ -150,7 +149,7 @@ def fl_finetune(
 
     model = get_peft_model(model, config)
 
-    print("The process of federated LoRA has started..")
+    print("The process of federated QLoRA has started..")
     previously_selected_clients_set = set()
     last_client_id = None
     local_dataset_len_dict = dict()
@@ -173,12 +172,12 @@ def fl_finetune(
             )
             client.build_local_trainer(
                 tokenizer,
-                local_micro_batch_size = 8,
-                gradient_accumulation_steps = 4,
-                local_num_epochs = 10,
-                local_learning_rate = 0.0003,
-                group_by_length = True,  # Pass group_by_length here
-                ddp = False,  # Assuming you don't want ddp
+                local_micro_batch_size=local_micro_batch_size,
+                gradient_accumulation_steps=local_batch_size // local_micro_batch_size,
+                local_num_epochs=local_num_epochs,
+                local_learning_rate=local_learning_rate,
+                group_by_length=group_by_length,
+                ddp=False,
             )
 
             print("Initiating the local training of Client_{}".format(client_id))
@@ -193,18 +192,23 @@ def fl_finetune(
             )
             del client
 
-        print("Collecting the weights of clients and performing aggregation")
-        # Implement the logic for federated averaging here
+        print("Collecting the weights of clients and performing aggregation using FedAvg method")
+        model = FedAvg(model,
+                       selected_clients_set,
+                       output_dir,
+                       local_dataset_len_dict,
+                       epoch,
+                       )
+        torch.save(model.state_dict(), os.path.join(output_dir, str(epoch), "FedAvg_adapter_model.bin"))
+        config.save_pretrained(output_dir)
 
-        # Save individual client models instead of aggregating
-        torch.save(
-            model.state_dict(),
-            os.path.join(output_dir, "client_{}_model_epoch_{}.bin".format(client_id, epoch)),
-        )
+    # Save the final aggregated model
+    final_model_path = os.path.join(output_dir, "final_aggregated_model.pth")
+    torch.save(model.state_dict(), final_model_path)
+    print(f"Final aggregated model saved to {final_model_path}")
 
-        # Save the model's configuration
-        model.config.save_pretrained(output_dir)
-
+    # Perform global evaluation
+    global_evaluation(model, tokenizer, data_path)
 
 if __name__ == "__main__":
     fire.Fire(fl_finetune)
