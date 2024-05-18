@@ -33,15 +33,15 @@ def main(
     load_8bit: bool = False,
     base_model: str = "allenai/OLMo-1B",
     lora_weights_path: str = "",
-    lora_config_path: str= "", # provide only the file path, excluding the file name 'adapter_config.json'
-    prompt_template: str = "",  # The prompt template to use, will default to alpaca.
+    lora_config_path: str= "", 
+    prompt_template: str = "",  
     server_name: str = "127.0.0.1",
     share_gradio: bool = False,
 ):
     base_model = base_model or os.environ.get("BASE_MODEL", "")
     assert (
         base_model
-    ), "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
+    )
 
     prompter = Prompter(prompt_template)
     tokenizer = LlamaTokenizer.from_pretrained(base_model)
@@ -178,7 +178,7 @@ def main(
         s = generation_output.sequences[0]
         output = tokenizer.decode(s)
         yield prompter.get_response(output)
-
+"""
     sherpherd_UI=gr.Interface(
         fn=evaluate,
         inputs=[
@@ -216,7 +216,7 @@ def main(
     ).queue()
 
     sherpherd_UI.launch(share=True)
-
+"""
 
 
 
