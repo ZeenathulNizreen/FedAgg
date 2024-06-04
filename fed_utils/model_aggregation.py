@@ -1,10 +1,6 @@
-from peft import (
-    set_peft_model_state_dict,
-)
+from peft import set_peft_model_state_dict
 import torch
-import os
 from torch.nn.functional import normalize
-
 
 def FedAvg(model, selected_clients_set, output_dir, local_dataset_len_dict, epoch):
     weights_array = normalize(
@@ -26,4 +22,9 @@ def FedAvg(model, selected_clients_set, output_dir, local_dataset_len_dict, epoc
 
     set_peft_model_state_dict(model, weighted_single_weights, "default")
 
+    return model
+
+def merge_models_kit(model, selected_clients_set, output_dir, epoch, merge_type="arithmetic"):
+    # Placeholder implementation for merging models using TaskArithmetic method
+    print("Merging models using", merge_type, "method.")
     return model
