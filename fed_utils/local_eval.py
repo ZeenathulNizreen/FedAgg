@@ -1,12 +1,10 @@
-import json
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import os
 import torch
+import json
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM, logging, GPT2Tokenizer
 import matplotlib.pyplot as plt
-
-# Disable warnings from transformers library
-logging.set_verbosity_error()
+from safetensors.torch import load_file
 
 class EvalDataset(Dataset):
     def __init__(self, texts, tokenizer, max_length=512):
@@ -42,27 +40,13 @@ def evaluate_model(model, eval_loader, device):
     avg_loss = sum(losses) / len(losses)
     return avg_loss, losses
 
-# Custom tokenizer class for OLMo
-class OLMoTokenizer(GPT2Tokenizer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Custom initialization if necessary
-
-# Register the custom tokenizer
-AutoTokenizer.register("OLMoTokenizer", OLMoTokenizer)
-
 # Load the global test set for evaluation
 eval_data = load_evaluation_data('../data/10/global_test.json')
-eval_responses = [item['response'] for item in eval_data]  # Adjust based on your JSON structure
+eval_texts = [item['response'] for item in eval_data]  # Extract 'response' for evaluation
 
 # Initialize the tokenizer
-try:
-    tokenizer = AutoTokenizer.from_pretrained("allenai/OLMo-1B", trust_remote_code=True)
-except ValueError as e:
-    print(f"Error loading tokenizer: {e}")
-    exit(1)
-
-eval_dataset = EvalDataset(eval_responses, tokenizer)
+tokenizer = AutoTokenizer.from_pretrained("allenai/OLMo-1B", trust_remote_code=True)
+eval_dataset = EvalDataset(eval_texts, tokenizer)
 eval_loader = DataLoader(eval_dataset, batch_size=4)
 
 # Check for GPU availability
@@ -71,38 +55,42 @@ print(f"Using device: {device}")
 
 # Path to client models
 client_model_paths = [
-    '../qlora-FedAggregation/10/trainer_saved/local_output_2/checkpoint-400',  # Replace with the actual path to each client's model
-    '../qlora-FedAggregation/10/trainer_saved/local_output_3/checkpoint-400',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_4/checkpoint-400',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_5/checkpoint-400',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_8/checkpoint-400',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_9/checkpoint-400'
+    '../qlora-FedAggregation/10/trainer_saved/local_output_2/checkpoint-400/adapter_model.safetensors',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_3/checkpoint-400/adapter_model.safetensors',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_4/checkpoint-400/adapter_model.safetensors',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_5/checkpoint-400/adapter_model.safetensors',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_8/checkpoint-400/adapter_model.safetensors',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_9/checkpoint-400/adapter_model.safetensors'
 ]
 
 client_evaluation_results = []
 
 for client_id, model_path in enumerate(client_model_paths):
     print(f"Evaluating Client {client_id}'s model...")
-    if not os.path.isdir(model_path):
-        print(f"Model path {model_path} does not exist or is not a directory.")
-        continue
-    try:
-        model = AutoModelForCausalLM.from_pretrained(model_path, local_files_only=True).to(device)
-        avg_loss, losses = evaluate_model(model, eval_loader, device)
-        client_evaluation_results.append({
-            'client_id': client_id,
-            'avg_loss': avg_loss,
-            'losses': losses
-        })
-        print(f"Client {client_id} Average Loss: {avg_loss}")
-    except Exception as e:
-        print(f"Error loading model for Client {client_id} from path {model_path}: {e}")
+    if os.path.exists(model_path):
+        try:
+            # Adjust the loading process to handle safetensors
+            state_dict = load_file(model_path)
+            model = AutoModelForCausalLM.from_pretrained("allenai/OLMo-1B", trust_remote_code=True)
+            model.load_state_dict(state_dict)
+            model = model.to(device)
+            avg_loss, losses = evaluate_model(model, eval_loader, device)
+            client_evaluation_results.append({
+                'client_id': client_id,
+                'avg_loss': avg_loss,
+                'losses': losses
+            })
+            print(f"Client {client_id} Average Loss: {avg_loss}")
+        except Exception as e:
+            print(f"Error loading model for Client {client_id} from path {model_path}: {e}")
+    else:
+        print(f"Model path for Client {client_id} does not exist: {model_path}")
 
 # Plot the loss curves for each client
-for result in client_evaluation_results:
-    plt.plot(result['losses'], label=f'Client {result["client_id"]}')
-
 if client_evaluation_results:
+    for result in client_evaluation_results:
+        plt.plot(result['losses'], label=f'Client {result["client_id"]}')
+
     plt.xlabel('Batch')
     plt.ylabel('Loss')
     plt.title('Evaluation Loss Curves for Each Client')

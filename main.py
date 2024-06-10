@@ -16,16 +16,13 @@ from trl import SFTTrainer
 datasets.utils.logging.set_verbosity_error()
 
 def fl_finetune(
-        # model/data params
         global_model: str = 'allenai/OLMo-1B',
         data_path: str = '/home/jovyan/work/FedAgg/data',
         output_dir: str = './qlora-FedAggregation',
-        # FL hyperparamas
         client_selection_strategy: str = 'random',
         client_selection_frac: float = 0.1,
         num_communication_rounds: int = 10,
         num_clients: int = 10,
-        # Local training hyperparams
         local_batch_size: int = 2,
         local_micro_batch_size: int = 2,
         local_num_epochs: int = 10,
@@ -33,12 +30,10 @@ def fl_finetune(
         local_val_set_size: int = 0,
         local_save_steps: int = 3,
         cutoff_len: int = 512,
-        # LoRA hyperparams
         lora_r: int = 64,
         lora_alpha: int = 16,
         lora_dropout: float = 0.01,
         lora_target_modules=["att_proj"],
-        # llm hyperparams
         train_on_inputs: bool = True,
         group_by_length: bool = True,
         prompt_template_name: str = "olmo",
@@ -199,7 +194,7 @@ def fl_finetune(
                               output_dir,
                               local_dataset_len_dict,
                               epoch)
-        torch.save(model_fedavg.state_dict(), os.path.join(output_dir, str(epoch), "FedAvg_adapter_model.bin"))
+        torch.save(model_fedavg.state_dict(), os.path.join(output_dir, str(epoch), "FedAvg_adapter_model.safetensors"))
         config.save_pretrained(output_dir)
 
         # Evaluate FedAvg model
@@ -207,38 +202,15 @@ def fl_finetune(
         fedavg_loss = evaluate_model(model_fedavg, tokenizer, os.path.join(data_path, 'global_test.json'))
         print(f"FedAvg model loss: {fedavg_loss}")
 
-        # Perform TaskArithmetic aggregation and save the result
-        print("Collecting the weights of clients and performing aggregation using TaskArithmetic method")
-        model_task_arithmetic = merge_models_kit(model,
-                                                 selected_clients_set,
-                                                 output_dir,
-                                                 epoch,
-                                                 merge_type="arithmetic")
-        torch.save(model_task_arithmetic.state_dict(), os.path.join(output_dir, str(epoch), "TaskArithmetic_adapter_model.bin"))
-        config.save_pretrained(output_dir)
-
-        # Evaluate TaskArithmetic model
-        print("Evaluating TaskArithmetic model...")
-        task_arithmetic_loss = evaluate_model(model_task_arithmetic, tokenizer, os.path.join(data_path, 'global_test.json'))
-        print(f"TaskArithmetic model loss: {task_arithmetic_loss}")
-
     # Save the final aggregated models
-    final_fedavg_model_path = os.path.join(output_dir, "final_fedavg_model.pth")
+    final_fedavg_model_path = os.path.join(output_dir, "final_fedavg_model.safetensors")
     torch.save(model_fedavg.state_dict(), final_fedavg_model_path)
     print(f"Final FedAvg model saved to {final_fedavg_model_path}")
-
-    final_task_arithmetic_model_path = os.path.join(output_dir, "final_task_arithmetic_model.pth")
-    torch.save(model_task_arithmetic.state_dict(), final_task_arithmetic_model_path)
-    print(f"Final TaskArithmetic model saved to {final_task_arithmetic_model_path}")
 
     # Perform global evaluation on the final models
     print("Performing final evaluation on FedAvg model...")
     final_fedavg_loss = evaluate_model(model_fedavg, tokenizer, os.path.join(data_path, 'global_test.json'))
     print(f"Final FedAvg model loss: {final_fedavg_loss}")
-
-    print("Performing final evaluation on TaskArithmetic model...")
-    final_task_arithmetic_loss = evaluate_model(model_task_arithmetic, tokenizer, os.path.join(data_path, 'global_test.json'))
-    print(f"Final TaskArithmetic model loss: {final_task_arithmetic_loss}")
 
 if __name__ == "__main__":
     fire.Fire(fl_finetune)
