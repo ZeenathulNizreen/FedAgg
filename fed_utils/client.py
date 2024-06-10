@@ -1,4 +1,3 @@
-
 import transformers
 import os
 from datasets import load_dataset
@@ -43,7 +42,7 @@ class GeneralClient:
                             local_num_epochs,
                             local_learning_rate,
                             group_by_length,
-                            ddp=False) :
+                            ddp=False):
         self.train_args = transformers.TrainingArguments(
             per_device_train_batch_size=local_micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
@@ -64,26 +63,17 @@ class GeneralClient:
             group_by_length=group_by_length,
             dataloader_drop_last=False
         )
-        """
-        self.local_trainer = transformers.Trainer(model=self.model,
-                                                  train_dataset=self.local_train_dataset,
-                                                  eval_dataset=self.local_eval_dataset,
-                                                  args=self.train_args,
-                                                  data_collator=transformers.DataCollatorForSeq2Seq(
-                                                      tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
-                                                  ),
-                                                  )
-        """                                          
+                                          
         self.local_trainer = SFTTrainer(model=self.model,
-                                                  train_dataset=self.local_train_dataset,
-                                                  eval_dataset=self.local_eval_dataset,
-                                                  max_seq_length = 2048,
-                                                  packing=True,
-                                                  args=self.train_args,
-                                                  data_collator=transformers.DataCollatorForSeq2Seq(
-                                                      tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
-                                                  ),
-                                                  )
+                                        train_dataset=self.local_train_dataset,
+                                        eval_dataset=self.local_eval_dataset,
+                                        max_seq_length=2048,
+                                        packing=True,
+                                        args=self.train_args,
+                                        data_collator=transformers.DataCollatorForSeq2Seq(
+                                            tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
+                                        ),
+                                        )
     def initiate_local_training(self):
         self.model.config.use_cache = False
         self.params_dict_old = copy.deepcopy(
@@ -106,7 +96,7 @@ class GeneralClient:
         new_adapter_weight = self.model.state_dict()
         single_output_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(self.client_id))
         os.makedirs(single_output_dir, exist_ok=True)
-        torch.save(new_adapter_weight, single_output_dir + "/pytorch_model.bin")
+        torch.save(new_adapter_weight, single_output_dir + "/adapter_model.safetensors")
 
         older_adapter_weight = get_peft_model_state_dict(self.model, self.params_dict_old, "default")
         set_peft_model_state_dict(self.model, older_adapter_weight, "default")
