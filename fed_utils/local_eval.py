@@ -55,12 +55,12 @@ print(f"Using device: {device}")
 
 # Path to client models
 client_model_paths = [
-    '../qlora-FedAggregation/10/trainer_saved/local_output_2/checkpoint-400/adapter_model.safetensors',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_3/checkpoint-400/adapter_model.safetensors',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_4/checkpoint-400/adapter_model.safetensors',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_5/checkpoint-400/adapter_model.safetensors',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_8/checkpoint-400/adapter_model.safetensors',
-    '../qlora-FedAggregation/10/trainer_saved/local_output_9/checkpoint-400/adapter_model.safetensors'
+    '../qlora-FedAggregation/10/trainer_saved/local_output_2/checkpoint-7400',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_3/checkpoint-7400',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_4/checkpoint-7400',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_5/checkpoint-7400',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_8/checkpoint-7400',
+    '../qlora-FedAggregation/10/trainer_saved/local_output_9/checkpoint-7400'
 ]
 
 client_evaluation_results = []
@@ -70,7 +70,7 @@ for client_id, model_path in enumerate(client_model_paths):
     if os.path.exists(model_path):
         try:
             # Adjust the loading process to handle safetensors
-            state_dict = load_file(model_path)
+            state_dict = load_file(os.path.join(model_path, 'adapter_model.safetensors'))
             model = AutoModelForCausalLM.from_pretrained("allenai/OLMo-1B", trust_remote_code=True)
             model.load_state_dict(state_dict)
             model = model.to(device)
