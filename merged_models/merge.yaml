@@ -1,0 +1,30 @@
+models:
+  - model: ../qlora-FedAggregation/10/2/local_output_4/
+    parameters:
+      weight: 1.0
+  - model: ../qlora-FedAggregation/10/3/local_output_5/
+    parameters:
+      weight: 1.0
+  - model: ../qlora-FedAggregation/10/4/local_output_3/
+    parameters:
+      weight: 1.0
+  - model: ../qlora-FedAggregation/10/5/local_output_9/
+    parameters:
+      weight: 1.0
+  - model: ../qlora-FedAggregation/10/6/local_output_8/
+    parameters:
+      weight: 1.0
+  - model: ../qlora-FedAggregation/10/7/local_output_8/
+    parameters:
+      weight: 1.0
+  - model: ../qlora-FedAggregation/10/8/local_output_8/
+    parameters:
+      weight: 1.0
+  - model: ../qlora-FedAggregation/10/8/local_output_8/
+    parameters:
+      weight: 1.0
+
+base_model: allenai/OLMo-1B
+merge_method: dare_linear
+dtype: bfloat16
+output_path: ./merged_models  
