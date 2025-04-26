@@ -1,33 +1,35 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from peft import PeftModel, PeftConfig
-from evaluation import evaluate_model
+from evaluation import evaluate_model  # Make sure evaluation.py exists in fed_utils
+import os
 
-# Set paths
-ADAPTER_PATH = "./qlora-FedAggregation/10/final_fedavg_model.safetensors"
-DATASET_PATH = "./data/10/global_test.json"
+# === CONFIG ===
+ADAPTER_PATH = "../qlora-FedAggregation/10/final_fedavg_model.safetensors"
+DATASET_PATH = "../data/10/global_test.json"
 BASE_MODEL_NAME = "allenai/OLMo-1B"
-
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 1. Load the base model
+# === CHECK FILES EXIST ===
+if not os.path.exists(ADAPTER_PATH):
+    raise FileNotFoundError(f"Adapter file not found at {ADAPTER_PATH}")
+if not os.path.exists(DATASET_PATH):
+    raise FileNotFoundError(f"Dataset file not found at {DATASET_PATH}")
+
+# === LOAD BASE MODEL ===
 print("Loading base model...")
-model = AutoModelForCausalLM.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True)
-model = model.to(DEVICE)
+model = AutoModelForCausalLM.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True).to(DEVICE)
 
-# 2. Load the adapter properly (without set_peft_model_state_dict)
+# === LOAD FINAL FEDAVG WEIGHTS ===
 print("Loading final FedAvg adapter...")
-adapter_weights = torch.load(ADAPTER_PATH, map_location="cuda")
+state_dict = torch.load(ADAPTER_PATH, map_location=DEVICE)  # NOTE: map_location=DEVICE
+model.load_state_dict(state_dict, strict=False)  # LoRA adapters are partial
+model.eval()
 
-# 3. Apply adapter manually
-model.load_state_dict(adapter_weights, strict=False)
-
-# 4. Load tokenizer
+# === LOAD TOKENIZER ===
 print("Loading tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True)
 
-# 5. Evaluate
+# === EVALUATE ===
 print("Evaluating...")
 average_loss = evaluate_model(model, tokenizer, DATASET_PATH)
-print(f"Final Average Loss: {average_loss}")
-
+print(f"\n Final Average Loss: {average_loss}")
