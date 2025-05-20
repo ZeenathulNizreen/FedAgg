@@ -1,0 +1,26 @@
+2025-05-20 19:01:05 | INFO | model_worker | args: Namespace(host='localhost', port=21002, worker_address='http://localhost:21002', controller_address='http://localhost:21001', model_path='exported_lorahub_model', revision='main', device='cuda', gpus=None, num_gpus=1, max_gpu_memory=None, dtype=None, load_8bit=False, cpu_offloading=False, gptq_ckpt=None, gptq_wbits=16, gptq_groupsize=-1, gptq_act_order=False, awq_ckpt=None, awq_wbits=16, awq_groupsize=-1, enable_exllama=False, exllama_max_seq_len=4096, exllama_gpu_split=None, exllama_cache_8bit=False, enable_xft=False, xft_max_seq_len=4096, xft_dtype=None, model_names=None, conv_template=None, embed_in_truncate=False, limit_worker_concurrency=5, stream_interval=2, no_register=False, seed=None, debug=False, ssl=False)
+2025-05-20 19:01:05 | INFO | model_worker | Loading the model ['exported_lorahub_model'] on worker 44d0bae0 ...
+2025-05-20 19:01:06 | ERROR | stderr | Traceback (most recent call last):
+2025-05-20 19:01:06 | ERROR | stderr |   File "<frozen runpy>", line 198, in _run_module_as_main
+2025-05-20 19:01:06 | ERROR | stderr |   File "<frozen runpy>", line 88, in _run_code
+2025-05-20 19:01:06 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 414, in <module>
+2025-05-20 19:01:06 | ERROR | stderr |     args, worker = create_model_worker()
+2025-05-20 19:01:06 | ERROR | stderr |                    ^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:01:06 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 385, in create_model_worker
+2025-05-20 19:01:06 | ERROR | stderr |     worker = ModelWorker(
+2025-05-20 19:01:06 | ERROR | stderr |              ^^^^^^^^^^^^
+2025-05-20 19:01:06 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 77, in __init__
+2025-05-20 19:01:06 | ERROR | stderr |     self.model, self.tokenizer = load_model(
+2025-05-20 19:01:06 | ERROR | stderr |                                  ^^^^^^^^^^^
+2025-05-20 19:01:06 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/model/model_adapter.py", line 373, in load_model
+2025-05-20 19:01:06 | ERROR | stderr |     model, tokenizer = adapter.load_model(model_path, kwargs)
+2025-05-20 19:01:06 | ERROR | stderr |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:01:06 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/model/model_adapter.py", line 108, in load_model
+2025-05-20 19:01:06 | ERROR | stderr |     tokenizer = AutoTokenizer.from_pretrained(
+2025-05-20 19:01:06 | ERROR | stderr |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:01:06 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/transformers/models/auto/tokenization_auto.py", line 994, in from_pretrained
+2025-05-20 19:01:06 | ERROR | stderr |     return tokenizer_class.from_pretrained(
+2025-05-20 19:01:06 | ERROR | stderr |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:01:06 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/transformers/tokenization_utils_base.py", line 2046, in from_pretrained
+2025-05-20 19:01:06 | ERROR | stderr |     raise EnvironmentError(
+2025-05-20 19:01:06 | ERROR | stderr | OSError: Can't load tokenizer for 'exported_lorahub_model'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'exported_lorahub_model' is the correct path to a directory containing all relevant files for a OLMoTokenizerFast tokenizer.

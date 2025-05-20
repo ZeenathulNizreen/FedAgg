@@ -1,0 +1,7 @@
+2025-05-20 19:22:50 | INFO | controller | args: Namespace(host='localhost', port=21001, dispatch_method='shortest_queue', ssl=False)
+2025-05-20 19:22:51 | ERROR | stderr | [32mINFO[0m:     Started server process [[36m64401[0m]
+2025-05-20 19:22:51 | ERROR | stderr | [32mINFO[0m:     Waiting for application startup.
+2025-05-20 19:22:51 | ERROR | stderr | [32mINFO[0m:     Application startup complete.
+2025-05-20 19:22:51 | ERROR | stderr | [32mINFO[0m:     Uvicorn running on [1mhttp://localhost:21001[0m (Press CTRL+C to quit)
+2025-05-20 19:26:30 | INFO | stdout | [32mINFO[0m:     2402:4000:2390:8fff:186d:32b3:b216:b2d:0 - "[1mGET / HTTP/1.1[0m" [31m404 Not Found[0m
+2025-05-20 19:29:10 | INFO | stdout | [32mINFO[0m:     2402:4000:2390:8fff:186d:32b3:b216:b2d:0 - "[1mGET / HTTP/1.1[0m" [31m404 Not Found[0m
