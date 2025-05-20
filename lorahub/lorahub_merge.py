@@ -12,7 +12,7 @@ output_path = "lorahub_merged_adapter.safetensors"
 # === Load adapter states directly ===
 print("Loading LoRA adapters...")
 model, tokenizer, cache = load_base_model_and_lora_modules(adapter_paths)
-lora_module_list = list(cache.keys())  # Now this is correctly the list of adapter names
+lora_module_list = list(cache.keys())  
 
 
 # === Merge
