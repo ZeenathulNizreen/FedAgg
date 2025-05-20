@@ -1,0 +1,11 @@
+Average Loss: 11.3165
+[1] Loss: 11.4933 | Prompt: Explain federated learning in simple terms.
+[2] Loss: 11.1272 | Prompt: What is QLoRA and why is it useful?
+[3] Loss: 11.6967 | Prompt: Describe the use of LoRA in low-resource settings.
+[4] Loss: 11.2515 | Prompt: How does parameter-efficient tuning work?
+[5] Loss: 11.7961 | Prompt: What are the privacy benefits of federated AI?
+[6] Loss: 10.7768 | Prompt: List applications of LLMs in education.
+[7] Loss: 11.5647 | Prompt: What makes instruction tuning effective?
+[8] Loss: 10.8475 | Prompt: Summarize how MergeKit works with adapters.
+[9] Loss: 11.3924 | Prompt: Define model merging in federated learning.
+[10] Loss: 11.2186 | Prompt: Give an example of prompt-tuned adaptation.
