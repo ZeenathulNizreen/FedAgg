@@ -1,0 +1,83 @@
+2025-05-20 19:20:54 | INFO | model_worker | args: Namespace(host='localhost', port=21002, worker_address='http://localhost:21002', controller_address='http://localhost:21001', model_path='exported_fedavg_model', revision='main', device='cuda', gpus=None, num_gpus=1, max_gpu_memory=None, dtype=None, load_8bit=False, cpu_offloading=False, gptq_ckpt=None, gptq_wbits=16, gptq_groupsize=-1, gptq_act_order=False, awq_ckpt=None, awq_wbits=16, awq_groupsize=-1, enable_exllama=False, exllama_max_seq_len=4096, exllama_gpu_split=None, exllama_cache_8bit=False, enable_xft=False, xft_max_seq_len=4096, xft_dtype=None, model_names=None, conv_template=None, embed_in_truncate=False, limit_worker_concurrency=5, stream_interval=2, no_register=False, seed=None, debug=False, ssl=False)
+2025-05-20 19:20:54 | INFO | model_worker | Loading the model ['exported_fedavg_model'] on worker 896c4000 ...
+2025-05-20 19:21:19 | INFO | model_worker | Register to controller
+2025-05-20 19:21:19 | ERROR | stderr | Traceback (most recent call last):
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/connection.py", line 198, in _new_conn
+2025-05-20 19:21:19 | ERROR | stderr |     sock = connection.create_connection(
+2025-05-20 19:21:19 | ERROR | stderr |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/util/connection.py", line 85, in create_connection
+2025-05-20 19:21:19 | ERROR | stderr |     raise err
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/util/connection.py", line 73, in create_connection
+2025-05-20 19:21:19 | ERROR | stderr |     sock.connect(sa)
+2025-05-20 19:21:19 | ERROR | stderr | ConnectionRefusedError: [Errno 111] Connection refused
+2025-05-20 19:21:19 | ERROR | stderr | 
+2025-05-20 19:21:19 | ERROR | stderr | The above exception was the direct cause of the following exception:
+2025-05-20 19:21:19 | ERROR | stderr | 
+2025-05-20 19:21:19 | ERROR | stderr | Traceback (most recent call last):
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/connectionpool.py", line 787, in urlopen
+2025-05-20 19:21:19 | ERROR | stderr |     response = self._make_request(
+2025-05-20 19:21:19 | ERROR | stderr |                ^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/connectionpool.py", line 493, in _make_request
+2025-05-20 19:21:19 | ERROR | stderr |     conn.request(
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/connection.py", line 445, in request
+2025-05-20 19:21:19 | ERROR | stderr |     self.endheaders()
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/lib/python3.11/http/client.py", line 1298, in endheaders
+2025-05-20 19:21:19 | ERROR | stderr |     self._send_output(message_body, encode_chunked=encode_chunked)
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/lib/python3.11/http/client.py", line 1058, in _send_output
+2025-05-20 19:21:19 | ERROR | stderr |     self.send(msg)
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/lib/python3.11/http/client.py", line 996, in send
+2025-05-20 19:21:19 | ERROR | stderr |     self.connect()
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/connection.py", line 276, in connect
+2025-05-20 19:21:19 | ERROR | stderr |     self.sock = self._new_conn()
+2025-05-20 19:21:19 | ERROR | stderr |                 ^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/connection.py", line 213, in _new_conn
+2025-05-20 19:21:19 | ERROR | stderr |     raise NewConnectionError(
+2025-05-20 19:21:19 | ERROR | stderr | urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7aebfbd144d0>: Failed to establish a new connection: [Errno 111] Connection refused
+2025-05-20 19:21:19 | ERROR | stderr | 
+2025-05-20 19:21:19 | ERROR | stderr | The above exception was the direct cause of the following exception:
+2025-05-20 19:21:19 | ERROR | stderr | 
+2025-05-20 19:21:19 | ERROR | stderr | Traceback (most recent call last):
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/requests/adapters.py", line 667, in send
+2025-05-20 19:21:19 | ERROR | stderr |     resp = conn.urlopen(
+2025-05-20 19:21:19 | ERROR | stderr |            ^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/connectionpool.py", line 841, in urlopen
+2025-05-20 19:21:19 | ERROR | stderr |     retries = retries.increment(
+2025-05-20 19:21:19 | ERROR | stderr |               ^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/urllib3/util/retry.py", line 519, in increment
+2025-05-20 19:21:19 | ERROR | stderr |     raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+2025-05-20 19:21:19 | ERROR | stderr |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr | urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=21001): Max retries exceeded with url: /register_worker (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7aebfbd144d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2025-05-20 19:21:19 | ERROR | stderr | 
+2025-05-20 19:21:19 | ERROR | stderr | During handling of the above exception, another exception occurred:
+2025-05-20 19:21:19 | ERROR | stderr | 
+2025-05-20 19:21:19 | ERROR | stderr | Traceback (most recent call last):
+2025-05-20 19:21:19 | ERROR | stderr |   File "<frozen runpy>", line 198, in _run_module_as_main
+2025-05-20 19:21:19 | ERROR | stderr |   File "<frozen runpy>", line 88, in _run_code
+2025-05-20 19:21:19 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 414, in <module>
+2025-05-20 19:21:19 | ERROR | stderr |     args, worker = create_model_worker()
+2025-05-20 19:21:19 | ERROR | stderr |                    ^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 385, in create_model_worker
+2025-05-20 19:21:19 | ERROR | stderr |     worker = ModelWorker(
+2025-05-20 19:21:19 | ERROR | stderr |              ^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 102, in __init__
+2025-05-20 19:21:19 | ERROR | stderr |     self.init_heart_beat()
+2025-05-20 19:21:19 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/base_model_worker.py", line 81, in init_heart_beat
+2025-05-20 19:21:19 | ERROR | stderr |     self.register_to_controller()
+2025-05-20 19:21:19 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/base_model_worker.py", line 99, in register_to_controller
+2025-05-20 19:21:19 | ERROR | stderr |     r = requests.post(url, json=data)
+2025-05-20 19:21:19 | ERROR | stderr |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/requests/api.py", line 115, in post
+2025-05-20 19:21:19 | ERROR | stderr |     return request("post", url, data=data, json=json, **kwargs)
+2025-05-20 19:21:19 | ERROR | stderr |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/requests/api.py", line 59, in request
+2025-05-20 19:21:19 | ERROR | stderr |     return session.request(method=method, url=url, **kwargs)
+2025-05-20 19:21:19 | ERROR | stderr |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/requests/sessions.py", line 589, in request
+2025-05-20 19:21:19 | ERROR | stderr |     resp = self.send(prep, **send_kwargs)
+2025-05-20 19:21:19 | ERROR | stderr |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/requests/sessions.py", line 703, in send
+2025-05-20 19:21:19 | ERROR | stderr |     r = adapter.send(request, **kwargs)
+2025-05-20 19:21:19 | ERROR | stderr |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:21:19 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/requests/adapters.py", line 700, in send
+2025-05-20 19:21:19 | ERROR | stderr |     raise ConnectionError(e, request=request)
+2025-05-20 19:21:19 | ERROR | stderr | requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=21001): Max retries exceeded with url: /register_worker (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7aebfbd144d0>: Failed to establish a new connection: [Errno 111] Connection refused'))

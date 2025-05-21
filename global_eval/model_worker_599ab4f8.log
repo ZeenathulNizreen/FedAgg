@@ -1,0 +1,35 @@
+2025-05-20 19:17:41 | INFO | model_worker | args: Namespace(host='localhost', port=21002, worker_address='http://localhost:21002', controller_address='http://localhost:21001', model_path='exported_fedavg_model', revision='main', device='cuda', gpus=None, num_gpus=1, max_gpu_memory=None, dtype=None, load_8bit=False, cpu_offloading=False, gptq_ckpt=None, gptq_wbits=16, gptq_groupsize=-1, gptq_act_order=False, awq_ckpt=None, awq_wbits=16, awq_groupsize=-1, enable_exllama=False, exllama_max_seq_len=4096, exllama_gpu_split=None, exllama_cache_8bit=False, enable_xft=False, xft_max_seq_len=4096, xft_dtype=None, model_names=None, conv_template=None, embed_in_truncate=False, limit_worker_concurrency=5, stream_interval=2, no_register=False, seed=None, debug=False, ssl=False)
+2025-05-20 19:17:41 | INFO | model_worker | Loading the model ['exported_fedavg_model'] on worker 599ab4f8 ...
+2025-05-20 19:17:41 | ERROR | stderr | Traceback (most recent call last):
+2025-05-20 19:17:41 | ERROR | stderr |   File "<frozen runpy>", line 198, in _run_module_as_main
+2025-05-20 19:17:41 | ERROR | stderr |   File "<frozen runpy>", line 88, in _run_code
+2025-05-20 19:17:41 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 414, in <module>
+2025-05-20 19:17:41 | ERROR | stderr |     args, worker = create_model_worker()
+2025-05-20 19:17:41 | ERROR | stderr |                    ^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 385, in create_model_worker
+2025-05-20 19:17:41 | ERROR | stderr |     worker = ModelWorker(
+2025-05-20 19:17:41 | ERROR | stderr |              ^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/serve/model_worker.py", line 77, in __init__
+2025-05-20 19:17:41 | ERROR | stderr |     self.model, self.tokenizer = load_model(
+2025-05-20 19:17:41 | ERROR | stderr |                                  ^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/model/model_adapter.py", line 373, in load_model
+2025-05-20 19:17:41 | ERROR | stderr |     model, tokenizer = adapter.load_model(model_path, kwargs)
+2025-05-20 19:17:41 | ERROR | stderr |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/root/FedAgg/global_eval/FastChat/fastchat/model/model_adapter.py", line 108, in load_model
+2025-05-20 19:17:41 | ERROR | stderr |     tokenizer = AutoTokenizer.from_pretrained(
+2025-05-20 19:17:41 | ERROR | stderr |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/transformers/models/auto/tokenization_auto.py", line 990, in from_pretrained
+2025-05-20 19:17:41 | ERROR | stderr |     tokenizer_class = get_class_from_dynamic_module(class_ref, pretrained_model_name_or_path, **kwargs)
+2025-05-20 19:17:41 | ERROR | stderr |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/transformers/dynamic_module_utils.py", line 558, in get_class_from_dynamic_module
+2025-05-20 19:17:41 | ERROR | stderr |     final_module = get_cached_module_file(
+2025-05-20 19:17:41 | ERROR | stderr |                    ^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/transformers/dynamic_module_utils.py", line 362, in get_cached_module_file
+2025-05-20 19:17:41 | ERROR | stderr |     resolved_module_file = cached_file(
+2025-05-20 19:17:41 | ERROR | stderr |                            ^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/transformers/utils/hub.py", line 266, in cached_file
+2025-05-20 19:17:41 | ERROR | stderr |     file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+2025-05-20 19:17:41 | ERROR | stderr |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-20 19:17:41 | ERROR | stderr |   File "/usr/local/lib/python3.11/dist-packages/transformers/utils/hub.py", line 381, in cached_files
+2025-05-20 19:17:41 | ERROR | stderr |     raise OSError(
+2025-05-20 19:17:41 | ERROR | stderr | OSError: exported_fedavg_model does not appear to have a file named tokenization_olmo_fast.py. Checkout 'https://huggingface.co/exported_fedavg_model/tree/main' for available files.
